@@ -2,10 +2,7 @@ package datter;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import datter.dto.Fixture;
-import datter.dto.Player;
-import datter.dto.Position;
-import datter.dto.Team;
+import datter.dto.*;
 import datter.repository.MongoSaver;
 
 import java.io.FileWriter;
@@ -17,6 +14,7 @@ import java.net.http.HttpResponse;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -25,13 +23,15 @@ public class Runner {
 
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
+    private static final HttpClient httpClient = HttpClient.newHttpClient();
+    private static final String HEADER_VALUE = "application/json";
+    private static final String HEADER_NAME = "accept";
+
     public static void main(String[] args) throws IOException, InterruptedException {
-        System.out.println("running up");
         Instant start = Instant.now();
-        var httpClient = HttpClient.newHttpClient();
         var httpRequest =
                 HttpRequest.newBuilder(URI.create("https://fantasy.premierleague.com/api/bootstrap-static/"))
-                .header("accept", "application/json")
+                .header(HEADER_NAME, HEADER_VALUE)
                 .build();
         var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
@@ -39,7 +39,7 @@ public class Runner {
         parseTeams(response);
         parsePositions(response);
         parsePlayers(response);
-        parseFixtures(httpClient);
+        parseFixtures();
         Instant end = Instant.now();
         System.out.println(Duration.between(start, end));
     }
@@ -48,7 +48,7 @@ public class Runner {
         SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss");
         Date date = new Date();
         try {
-            try (FileWriter myWriter = new FileWriter("filename" + formatter.format(date) + ".txt")) {
+            try (FileWriter myWriter = new FileWriter("filename" + formatter.format(date) + ".json")) {
                 myWriter.write(response.body());
             }
         } catch (IOException e) {
@@ -56,24 +56,38 @@ public class Runner {
         }
     }
 
-    private static void parseFixtures(HttpClient httpClient) throws IOException, InterruptedException {
-        HttpRequest httpRequest;
-        HttpResponse<String> response;
-        httpRequest =
+    private static void parseFixtures() throws IOException, InterruptedException {
+        HttpRequest httpRequest =
                HttpRequest.newBuilder(URI.create("https://fantasy.premierleague.com/api/fixtures/"))
-                       .header("accept", "application/json")
+                       .header(HEADER_NAME, HEADER_VALUE)
                        .build();
-        response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         final List<Fixture> fixtures = gson.fromJson(response.body(), new TypeToken<List<Fixture>>(){}.getType());
         fixtures.forEach(SAVER::saveFixture);
     }
 
-    private static void parsePlayers(HttpResponse<String> response) {
+    private static void parsePlayers(HttpResponse<String> response) throws IOException, InterruptedException {
 
         JsonObject jo = (JsonObject)JsonParser.parseString(response.body());
         JsonArray jsonArr = jo.getAsJsonArray("elements");
         final List<Player> players = gson.fromJson(jsonArr, new TypeToken<List<Player>>(){}.getType());
-        players.forEach(SAVER::savePlayer);
+        final List<FullPlayer> fullPlayers = parseFullPlayersData(players);
+        fullPlayers.forEach(SAVER::savePlayer);
+    }
+
+    private static List<FullPlayer> parseFullPlayersData(List<Player> players) throws IOException, InterruptedException {
+        final List<FullPlayer> fullPlayers = new ArrayList<>(players.size());
+        for (final Player player : players) {
+            HttpRequest httpRequest =
+                    HttpRequest.newBuilder(URI.create("https://fantasy.premierleague.com/api/element-summary/" + player.getId() + "/"))
+                            .header(HEADER_NAME, HEADER_VALUE)
+                            .build();
+            var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            final PlayerDetails playerDetails = gson.fromJson(response.body(), new TypeToken<PlayerDetails>() {
+            }.getType());
+            fullPlayers.add(new FullPlayer(player, playerDetails));
+        }
+        return fullPlayers;
     }
 
     private static void parsePositions(HttpResponse<String> response) {

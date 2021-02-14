@@ -7,10 +7,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.UpdateOptions;
-import datter.dto.Fixture;
-import datter.dto.Player;
-import datter.dto.Position;
-import datter.dto.Team;
+import datter.dto.*;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -34,10 +31,10 @@ public class MongoSaver {
         upsert(collection, team.getId(), gson.toJson(team));
     }
 
-    public void savePlayer(final Player player)
+    public void savePlayer(final FullPlayer player)
     {
         var collection = database.getCollection("players");
-        upsert(collection, player.getId(), gson.toJson(player));
+        upsert(collection, player.getPlayer().getId(), gson.toJson(player));
     }
 
     public void savePosition(final Position position)
