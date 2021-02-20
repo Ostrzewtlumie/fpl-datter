@@ -8,5 +8,4 @@ public class PlayerRemainingFixture {
     private boolean finished;
     private int difficulty;
     private boolean is_home;
-
 }
