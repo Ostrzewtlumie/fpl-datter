@@ -26,6 +26,7 @@ public class Runner {
     private static final HttpClient httpClient = HttpClient.newHttpClient();
     private static final String HEADER_VALUE = "application/json";
     private static final String HEADER_NAME = "accept";
+    public static final String UNAVAILABLE_STATUS = "u";
 
     public static void main(String[] args) throws IOException, InterruptedException {
         Instant start = Instant.now();
@@ -78,14 +79,20 @@ public class Runner {
     private static List<FullPlayer> parseFullPlayersData(List<Player> players) throws IOException, InterruptedException {
         final List<FullPlayer> fullPlayers = new ArrayList<>(players.size());
         for (final Player player : players) {
-            HttpRequest httpRequest =
-                    HttpRequest.newBuilder(URI.create("https://fantasy.premierleague.com/api/element-summary/" + player.getId() + "/"))
-                            .header(HEADER_NAME, HEADER_VALUE)
-                            .build();
-            var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-            final PlayerDetails playerDetails = gson.fromJson(response.body(), new TypeToken<PlayerDetails>() {
-            }.getType());
-            fullPlayers.add(new FullPlayer(player, playerDetails));
+            if (!UNAVAILABLE_STATUS.equals(player.getStatus())) {
+                HttpRequest httpRequest =
+                        HttpRequest.newBuilder(URI.create("https://fantasy.premierleague.com/api/element-summary/" + player.getId() + "/"))
+                                .header(HEADER_NAME, HEADER_VALUE)
+                                .build();
+                var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+                final PlayerDetails playerDetails = gson.fromJson(response.body(), new TypeToken<PlayerDetails>() {
+                }.getType());
+                fullPlayers.add(new FullPlayer(player, playerDetails));
+            }
+            else
+            {
+                fullPlayers.add(new FullPlayer(player, null));
+            }
         }
         return fullPlayers;
     }
