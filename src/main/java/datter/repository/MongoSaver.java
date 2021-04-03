@@ -43,13 +43,13 @@ public class MongoSaver {
         upsert(collection, position.getId(), gson.toJson(position));
     }
 
-    public void saveFixture(Fixture fixture)
+    public void saveFixture(final Fixture fixture)
     {
         var collection = database.getCollection("fixtures");
         upsert(collection, fixture.getId(), gson.toJson(fixture));
     }
 
-    private void upsert(MongoCollection<Document> collection, int id, String json) {
+    private void upsert(final MongoCollection<Document> collection, final int id, final String json) {
         Bson filter = eq("id", id);
         UpdateOptions options = new UpdateOptions().upsert(true);
         var document = Document.parse(json);

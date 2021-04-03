@@ -46,27 +46,27 @@ public class Team {
         return id;
     }
 
-    public void setDraw(int draw) {
+    public void setDraw(final int draw) {
         this.draw = draw;
     }
 
-    public void setWin(int win) {
+    public void setWin(final int win) {
         this.win = win;
     }
 
-    public void setLoss(int loss) {
+    public void setLoss(final int loss) {
         this.loss = loss;
     }
 
-    public void setPlayed(int played) {
+    public void setPlayed(final int played) {
         this.played = played;
     }
 
-    public void setScoredGoals(int scoredGoals) {
+    public void setScoredGoals(final int scoredGoals) {
         this.scoredGoals = scoredGoals;
     }
 
-    public void setLostGoals(int lostGoals) {
+    public void setLostGoals(final int lostGoals) {
         this.lostGoals = lostGoals;
     }
 }
