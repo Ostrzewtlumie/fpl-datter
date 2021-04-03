@@ -36,4 +36,24 @@ public class Fixture {
     public int getId() {
         return id;
     }
+
+    public int getTeamHome() {
+        return teamHome;
+    }
+
+    public int getTeamAway() {
+        return teamAway;
+    }
+
+    public int getTeamAwayScore() {
+        return teamAwayScore;
+    }
+
+    public int getTeamHomeScore() {
+        return teamHomeScore;
+    }
+
+    public Boolean getStarted() {
+        return started;
+    }
 }

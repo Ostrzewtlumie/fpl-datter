@@ -3,7 +3,7 @@ package datter.dto;
 import com.google.gson.annotations.SerializedName;
 
 public class Team {
-    private int id;
+    private Integer id;
 
     private String name;
 
@@ -38,7 +38,35 @@ public class Team {
     @SerializedName(value = "strength_defence_away")
     private int strengthDefenceAway;
 
-    public int getId() {
+    private int scoredGoals;
+
+    private int lostGoals;
+
+    public Integer getId() {
         return id;
+    }
+
+    public void setDraw(final int draw) {
+        this.draw = draw;
+    }
+
+    public void setWin(final int win) {
+        this.win = win;
+    }
+
+    public void setLoss(final int loss) {
+        this.loss = loss;
+    }
+
+    public void setPlayed(final int played) {
+        this.played = played;
+    }
+
+    public void setScoredGoals(final int scoredGoals) {
+        this.scoredGoals = scoredGoals;
+    }
+
+    public void setLostGoals(final int lostGoals) {
+        this.lostGoals = lostGoals;
     }
 }
