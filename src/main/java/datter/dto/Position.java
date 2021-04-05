@@ -5,8 +5,11 @@ import com.google.gson.annotations.SerializedName;
 public class Position {
     private Integer id;
 
-    @SerializedName(value = "plural_name")
-    private String pluralName;
+    @SerializedName(value = "singular_name")
+    private String singularName;
+
+    @SerializedName(value = "singular_name_short")
+    private String singularShortName;
 
     public int getId() {
         return id;
