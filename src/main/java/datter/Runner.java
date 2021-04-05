@@ -126,9 +126,7 @@ public class Runner {
     private static List<Position> parsePositions(final HttpResponse<String> response) {
         final JsonObject jo = (JsonObject)JsonParser.parseString(response.body());
         final JsonArray jsonArr = jo.getAsJsonArray("element_types");
-        final List<Position> positions = gson.fromJson(jsonArr, new TypeToken<List<Position>>(){}.getType());
-        positions.forEach(SAVER::savePosition);
-        return positions;
+        return gson.fromJson(jsonArr, new TypeToken<List<Position>>(){}.getType());
     }
 
     private static List<Team> parseTeams(final HttpResponse<String> response, final List<Fixture> fixtures) {

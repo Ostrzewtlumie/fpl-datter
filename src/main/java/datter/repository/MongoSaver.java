@@ -37,12 +37,6 @@ public class MongoSaver {
         upsert(collection, player.getPlayer().getId(), gson.toJson(player));
     }
 
-    public void savePosition(final Position position)
-    {
-        final var collection = database.getCollection("positions");
-        upsert(collection, position.getId(), gson.toJson(position));
-    }
-
     public void saveFixture(final Fixture fixture)
     {
         final var collection = database.getCollection("fixtures");
