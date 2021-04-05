@@ -21,7 +21,7 @@ public class Player {
     private int chanceOfPlayingThisRound;
 
     @SerializedName(value = "element_type")
-    private int postion;
+    private int position;
 
     @SerializedName(value = "event_points")
     private int pointsGameWeek;
