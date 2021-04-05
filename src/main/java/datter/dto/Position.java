@@ -14,4 +14,12 @@ public class Position {
     public int getId() {
         return id;
     }
+
+    public String getSingularName() {
+        return singularName;
+    }
+
+    public String getSingularShortName() {
+        return singularShortName;
+    }
 }
