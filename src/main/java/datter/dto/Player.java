@@ -1,9 +1,9 @@
 package datter.dto;
 
 public class Player {
-    private PlayerDetails playerDetails;
+    private final PlayerDetails playerDetails;
 
-    private PlayerFixtures playerFixtures;
+    private final PlayerFixtures playerFixtures;
 
     public Player(final PlayerDetails playerDetails, final PlayerFixtures playerFixtures) {
         this.playerDetails = playerDetails;

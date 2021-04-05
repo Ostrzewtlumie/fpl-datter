@@ -31,51 +31,51 @@ public class Runner {
     private static final String HEADER_NAME = "accept";
     public static final String UNAVAILABLE_STATUS = "u";
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        Instant start = Instant.now();
-        var httpRequest =
+    public static void main(final String[] args) throws IOException, InterruptedException {
+        final Instant start = Instant.now();
+        final var httpRequest =
                 HttpRequest.newBuilder(URI.create("https://fantasy.premierleague.com/api/bootstrap-static/"))
                 .header(HEADER_NAME, HEADER_VALUE)
                 .build();
-        var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        final var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
         saveResponse(response);
-        var fixtures = parseFixtures();
-        var teams = parseTeams(response, fixtures);
-        var positions = parsePositions(response);
+        final var fixtures = parseFixtures();
+        final var teams = parseTeams(response, fixtures);
+        final var positions = parsePositions(response);
         parsePlayers(response, teams, positions);
-        Instant end = Instant.now();
+        final Instant end = Instant.now();
         System.out.println(Duration.between(start, end));
     }
 
     private static void saveResponse(final HttpResponse<String> response) {
-        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss");
-        Date date = new Date();
+        final SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss");
+        final Date date = new Date();
         try {
-            try (FileWriter myWriter = new FileWriter("filename" + formatter.format(date) + ".json")) {
+            try (final FileWriter myWriter = new FileWriter("filename" + formatter.format(date) + ".json")) {
                 myWriter.write(response.body());
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }
 
     private static List<Fixture> parseFixtures() throws IOException, InterruptedException {
-        HttpRequest httpRequest =
+        final HttpRequest httpRequest =
                HttpRequest.newBuilder(URI.create("https://fantasy.premierleague.com/api/fixtures/"))
                        .header(HEADER_NAME, HEADER_VALUE)
                        .build();
-        var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        final var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         final List<Fixture> fixtures = gson.fromJson(response.body(), new TypeToken<List<Fixture>>(){}.getType());
         fixtures.forEach(SAVER::saveFixture);
         return fixtures;
     }
 
-    private static void parsePlayers(final HttpResponse<String> response, List<Team> teams, List<Position> positions)
+    private static void parsePlayers(final HttpResponse<String> response, final List<Team> teams, final List<Position> positions)
             throws IOException, InterruptedException {
 
-        JsonObject jo = (JsonObject)JsonParser.parseString(response.body());
-        JsonArray jsonArr = jo.getAsJsonArray("elements");
+        final JsonObject jo = (JsonObject)JsonParser.parseString(response.body());
+        final JsonArray jsonArr = jo.getAsJsonArray("elements");
         final List<PlayerDetails> playerDetailsList = gson.fromJson(jsonArr, new TypeToken<List<PlayerDetails>>(){}.getType());
         updateTeam(playerDetailsList, teams);
         updatePosition(playerDetailsList, positions);
@@ -85,7 +85,7 @@ public class Runner {
 
     private static void updatePosition(final List<PlayerDetails> playerDetailsList, final List<Position> positions) {
         playerDetailsList.forEach(playerDetails -> {
-            Optional<Position> optionalPosition = positions.stream().filter(position -> playerDetails.getPosition() == position.getId()).findAny();
+            final Optional<Position> optionalPosition = positions.stream().filter(position -> playerDetails.getPosition() == position.getId()).findAny();
             if (optionalPosition.isPresent())
             {
                 playerDetails.setPositionName(optionalPosition.get().getSingularName());
@@ -94,9 +94,9 @@ public class Runner {
         });
     }
 
-    private static void updateTeam(List<PlayerDetails> playerDetailsList, List<Team> teams) {
+    private static void updateTeam(final List<PlayerDetails> playerDetailsList, final List<Team> teams) {
         playerDetailsList.forEach(playerDetails -> {
-            Optional<Team> optionalTeam = teams.stream().filter(team -> playerDetails.getTeam() == team.getId()).findAny();
+            final Optional<Team> optionalTeam = teams.stream().filter(team -> playerDetails.getTeam() == team.getId()).findAny();
             optionalTeam.ifPresent(team -> playerDetails.setTeamName(team.getName()));
         });
 
@@ -106,11 +106,11 @@ public class Runner {
         final List<Player> players = new ArrayList<>(playerDetailsList.size());
         for (final PlayerDetails playerDetails : playerDetailsList) {
             if (!UNAVAILABLE_STATUS.equals(playerDetails.getStatus())) {
-                HttpRequest httpRequest =
+                final HttpRequest httpRequest =
                         HttpRequest.newBuilder(URI.create("https://fantasy.premierleague.com/api/element-summary/" + playerDetails.getId() + "/"))
                                 .header(HEADER_NAME, HEADER_VALUE)
                                 .build();
-                var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+                final var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
                 final PlayerFixtures playerFixtures = gson.fromJson(response.body(), new TypeToken<PlayerFixtures>() {
                 }.getType());
                 players.add(new Player(playerDetails, playerFixtures));
@@ -124,16 +124,16 @@ public class Runner {
     }
 
     private static List<Position> parsePositions(final HttpResponse<String> response) {
-        JsonObject jo = (JsonObject)JsonParser.parseString(response.body());
-        JsonArray jsonArr = jo.getAsJsonArray("element_types");
+        final JsonObject jo = (JsonObject)JsonParser.parseString(response.body());
+        final JsonArray jsonArr = jo.getAsJsonArray("element_types");
         final List<Position> positions = gson.fromJson(jsonArr, new TypeToken<List<Position>>(){}.getType());
         positions.forEach(SAVER::savePosition);
         return positions;
     }
 
     private static List<Team> parseTeams(final HttpResponse<String> response, final List<Fixture> fixtures) {
-        JsonObject jo = (JsonObject)JsonParser.parseString(response.body());
-        JsonArray jsonArr = jo.getAsJsonArray("teams");
+        final JsonObject jo = (JsonObject)JsonParser.parseString(response.body());
+        final JsonArray jsonArr = jo.getAsJsonArray("teams");
         final List<Team> teams = gson.fromJson(jsonArr, new TypeToken<List<Team>>(){}.getType());
         updateTeams(teams, fixtures);
         teams.forEach(SAVER::saveTeam);
@@ -142,7 +142,7 @@ public class Runner {
 
     private static void updateTeams(final List<Team> teams, final List<Fixture> fixtures) {
         teams.forEach(team -> {
-            Supplier<Stream<Fixture>> streamSupplier =
+            final Supplier<Stream<Fixture>> streamSupplier =
                     () -> fixtures.stream().filter(f -> checkTeam(team, f) && Boolean.TRUE.equals(f.getStarted()));
             team.setPlayed((int) streamSupplier.get().count());
             team.setDraw((int) streamSupplier.get().filter(f -> f.getTeamAwayScore() == f.getTeamHomeScore()).count());

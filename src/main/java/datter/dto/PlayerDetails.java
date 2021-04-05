@@ -99,11 +99,11 @@ public class PlayerDetails {
         return status;
     }
 
-    public void setTeamName(String teamName) {
+    public void setTeamName(final String teamName) {
         this.teamName = teamName;
     }
 
-    public void setPositionName(String positionName) {
+    public void setPositionName(final String positionName) {
         this.positionName = positionName;
     }
 
@@ -111,7 +111,7 @@ public class PlayerDetails {
         return position;
     }
 
-    public void setShortName(String shortName) {
+    public void setShortName(final String shortName) {
         this.shortName = shortName;
     }
 

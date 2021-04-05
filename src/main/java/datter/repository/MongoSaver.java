@@ -21,39 +21,39 @@ public class MongoSaver {
 
     public MongoSaver()
     {
-        MongoClient mongoClient = MongoClients.create();
+        final MongoClient mongoClient = MongoClients.create();
         database = mongoClient.getDatabase("test");
     }
 
     public void saveTeam(final Team team)
     {
-        var collection = database.getCollection("teams");
+        final var collection = database.getCollection("teams");
         upsert(collection, team.getId(), gson.toJson(team));
     }
 
     public void savePlayer(final Player player)
     {
-        var collection = database.getCollection("players");
+        final var collection = database.getCollection("players");
         upsert(collection, player.getPlayer().getId(), gson.toJson(player));
     }
 
     public void savePosition(final Position position)
     {
-        var collection = database.getCollection("positions");
+        final var collection = database.getCollection("positions");
         upsert(collection, position.getId(), gson.toJson(position));
     }
 
     public void saveFixture(final Fixture fixture)
     {
-        var collection = database.getCollection("fixtures");
+        final var collection = database.getCollection("fixtures");
         upsert(collection, fixture.getId(), gson.toJson(fixture));
     }
 
     private void upsert(final MongoCollection<Document> collection, final int id, final String json) {
-        Bson filter = eq("id", id);
-        UpdateOptions options = new UpdateOptions().upsert(true);
-        var document = Document.parse(json);
-        Bson update = new Document("$set", document);
+        final Bson filter = eq("id", id);
+        final UpdateOptions options = new UpdateOptions().upsert(true);
+        final var document = Document.parse(json);
+        final Bson update = new Document("$set", document);
         collection.updateOne(filter, update, options);
     }
 }
