@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -40,9 +41,9 @@ public class Runner {
 
         saveResponse(response);
         var fixtures = parseFixtures();
-        parseTeams(response, fixtures);
-        parsePositions(response);
-        parsePlayers(response);
+        var teams = parseTeams(response, fixtures);
+        var positions = parsePositions(response);
+        parsePlayers(response, teams, positions);
         Instant end = Instant.now();
         System.out.println(Duration.between(start, end));
     }
@@ -70,49 +71,73 @@ public class Runner {
         return fixtures;
     }
 
-    private static void parsePlayers(final HttpResponse<String> response) throws IOException, InterruptedException {
+    private static void parsePlayers(final HttpResponse<String> response, List<Team> teams, List<Position> positions)
+            throws IOException, InterruptedException {
 
         JsonObject jo = (JsonObject)JsonParser.parseString(response.body());
         JsonArray jsonArr = jo.getAsJsonArray("elements");
-        final List<Player> players = gson.fromJson(jsonArr, new TypeToken<List<Player>>(){}.getType());
-        final List<FullPlayer> fullPlayers = parseFullPlayersData(players);
-        fullPlayers.forEach(SAVER::savePlayer);
+        final List<PlayerDetails> playerDetailsList = gson.fromJson(jsonArr, new TypeToken<List<PlayerDetails>>(){}.getType());
+        updateTeam(playerDetailsList, teams);
+        updatePosition(playerDetailsList, positions);
+        final List<Player> players = parseFullPlayersData(playerDetailsList);
+        players.forEach(SAVER::savePlayer);
     }
 
-    private static List<FullPlayer> parseFullPlayersData(final List<Player> players) throws IOException, InterruptedException {
-        final List<FullPlayer> fullPlayers = new ArrayList<>(players.size());
-        for (final Player player : players) {
-            if (!UNAVAILABLE_STATUS.equals(player.getStatus())) {
+    private static void updatePosition(final List<PlayerDetails> playerDetailsList, final List<Position> positions) {
+        playerDetailsList.forEach(playerDetails -> {
+            Optional<Position> optionalPosition = positions.stream().filter(position -> playerDetails.getPosition() == position.getId()).findAny();
+            if (optionalPosition.isPresent())
+            {
+                playerDetails.setPositionName(optionalPosition.get().getSingularName());
+                playerDetails.setShortName(optionalPosition.get().getSingularShortName());
+            }
+        });
+    }
+
+    private static void updateTeam(List<PlayerDetails> playerDetailsList, List<Team> teams) {
+        playerDetailsList.forEach(playerDetails -> {
+            Optional<Team> optionalTeam = teams.stream().filter(team -> playerDetails.getTeam() == team.getId()).findAny();
+            optionalTeam.ifPresent(team -> playerDetails.setTeamName(team.getName()));
+        });
+
+    }
+
+    private static List<Player> parseFullPlayersData(final List<PlayerDetails> playerDetailsList) throws IOException, InterruptedException {
+        final List<Player> players = new ArrayList<>(playerDetailsList.size());
+        for (final PlayerDetails playerDetails : playerDetailsList) {
+            if (!UNAVAILABLE_STATUS.equals(playerDetails.getStatus())) {
                 HttpRequest httpRequest =
-                        HttpRequest.newBuilder(URI.create("https://fantasy.premierleague.com/api/element-summary/" + player.getId() + "/"))
+                        HttpRequest.newBuilder(URI.create("https://fantasy.premierleague.com/api/element-summary/" + playerDetails.getId() + "/"))
                                 .header(HEADER_NAME, HEADER_VALUE)
                                 .build();
                 var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-                final PlayerDetails playerDetails = gson.fromJson(response.body(), new TypeToken<PlayerDetails>() {
+                final PlayerFixtures playerFixtures = gson.fromJson(response.body(), new TypeToken<PlayerFixtures>() {
                 }.getType());
-                fullPlayers.add(new FullPlayer(player, playerDetails));
+                players.add(new Player(playerDetails, playerFixtures));
             }
             else
             {
-                fullPlayers.add(new FullPlayer(player, null));
+                players.add(new Player(playerDetails, null));
             }
         }
-        return fullPlayers;
+        return players;
     }
 
-    private static void parsePositions(final HttpResponse<String> response) {
+    private static List<Position> parsePositions(final HttpResponse<String> response) {
         JsonObject jo = (JsonObject)JsonParser.parseString(response.body());
         JsonArray jsonArr = jo.getAsJsonArray("element_types");
         final List<Position> positions = gson.fromJson(jsonArr, new TypeToken<List<Position>>(){}.getType());
         positions.forEach(SAVER::savePosition);
+        return positions;
     }
 
-    private static void parseTeams(final HttpResponse<String> response, final List<Fixture> fixtures) {
+    private static List<Team> parseTeams(final HttpResponse<String> response, final List<Fixture> fixtures) {
         JsonObject jo = (JsonObject)JsonParser.parseString(response.body());
         JsonArray jsonArr = jo.getAsJsonArray("teams");
         final List<Team> teams = gson.fromJson(jsonArr, new TypeToken<List<Team>>(){}.getType());
         updateTeams(teams, fixtures);
         teams.forEach(SAVER::saveTeam);
+        return teams;
     }
 
     private static void updateTeams(final List<Team> teams, final List<Fixture> fixtures) {

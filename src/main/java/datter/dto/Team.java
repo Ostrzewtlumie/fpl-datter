@@ -69,4 +69,8 @@ public class Team {
     public void setLostGoals(final int lostGoals) {
         this.lostGoals = lostGoals;
     }
+
+    public String getName() {
+        return name;
+    }
 }

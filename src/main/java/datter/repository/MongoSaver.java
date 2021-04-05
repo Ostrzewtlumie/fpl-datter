@@ -31,7 +31,7 @@ public class MongoSaver {
         upsert(collection, team.getId(), gson.toJson(team));
     }
 
-    public void savePlayer(final FullPlayer player)
+    public void savePlayer(final Player player)
     {
         var collection = database.getCollection("players");
         upsert(collection, player.getPlayer().getId(), gson.toJson(player));
